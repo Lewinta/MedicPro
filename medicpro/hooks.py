@@ -27,7 +27,8 @@ app_license = "MIT"
 
 # include js in doctype views
 doctype_js = {
-	"Item" : "public/js/item.js"
+	"Item" : "public/js/item.js",
+	"Customer" : "public/js/customer.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -81,13 +82,11 @@ doctype_js = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Customer": {
+		"validate": "medicpro.hook.customer.validate",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
