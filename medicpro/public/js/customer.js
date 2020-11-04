@@ -18,18 +18,21 @@ frappe.ui.form.on("Customer", {
 		frm.set_value("customer_name", new_name);
 	},
 	ars: frm => {
+		if (!frm.doc.ars)
+			frm.set_value("ars_name", "");	
+
 		frm.toggle_reqd("ars_name", !!frm.doc.ars);
 	}, 
 	customer_group: frm => {
 		
-		frm.toggle_reqd("date_of_birth", frm.doc.customer_group == "Clientes");
+		frm.toggle_reqd("date_of_birth", frm.doc.customer_group == "Patients");
 
 		if(frm.doc.customer_group == "ARS"){
 			frm.set_value("customer_type", "Company");
 			frm.set_value("naming_series", "ARS-.########");
 		}
 		
-		if(frm.doc.customer_group == "Clientes"){
+		if(frm.doc.customer_group == "Patients"){
 			frm.set_value("customer_type", "Individual");
 			frm.set_value("naming_series", "CUST-.########");
 		}

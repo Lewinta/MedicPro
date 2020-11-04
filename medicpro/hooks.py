@@ -16,7 +16,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/medicpro/css/medicpro.css"
-# app_include_js = "/assets/medicpro/js/medicpro.js"
+app_include_js = "/assets/medicpro/js/medicpro.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/medicpro/css/medicpro.css"
@@ -29,6 +29,8 @@ app_license = "MIT"
 doctype_js = {
 	"Item" : "public/js/item.js",
 	"Customer" : "public/js/customer.js",
+	"Patient" : "public/js/patient.js",
+	"Sales Invoice" : "public/js/sales_invoice.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -83,8 +85,16 @@ doctype_js = {
 # Hook on document methods and events
 
 doc_events = {
+	"Patient": {
+		"after_insert": "medicpro.hook.patient.after_insert",
+		"on_update": "medicpro.hook.patient.on_update",
+	},
+	"Sales Invoice": {
+		"autoname": "medicpro.hook.sales_invoice.autoname",
+		"before_submit": "medicpro.hook.sales_invoice.before_submit",
+	},
 	"Customer": {
-		"validate": "medicpro.hook.customer.validate",
+		"after_insert": "medicpro.hook.customer.after_insert",
 	}
 }
 
@@ -127,4 +137,4 @@ doc_events = {
 # override_doctype_dashboards = {
 # 	"Task": "medicpro.task.get_dashboard_data"
 # }
-
+boot_session = "medicpro.boot.boot_session"

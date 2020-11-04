@@ -1,48 +1,27 @@
 import frappe
-from frappe.utils import nowdate
 
-def validate(doc, event):
-	if doc.date_of_birth:
-		calculate_age(doc)
+def after_insert(self, event):
+	if not self.customer_group == "ARS" or\
+		frappe.db.exists("Price List", self.name):
+		return 0 # exit code is zero
 
-def calculate_age(doc):
-	age_m = calculate_age_m(doc.date_of_birth)
-	
-	if age_m > 12:
-		doc.age = "{} Año(s)".format(
-			calculate_age_y(doc.date_of_birth)
-		)
-	else:
-		doc.age = "{} Mes(es)".format(age_m)
+	pricls = frappe.new_doc("Price List")
 
-def calculate_age_y(c_date, a_date=None):
-	age = 0	
-	today = a_date if a_date else nowdate();
-	now_year = int(today.split("-")[0]);
-	now_month = int(today.split("-")[1]);
+	pricls.update({
+		"selling": 1,
+		"currency": "DOP",
+		"doctype": "Price List",
+		"price_list_title": self.customer_name,
+		"enabled": 1,
+		"price_list_name": self.name
+	})
 
-	dt_year = int(c_date.split("-")[0]);
-	dt_month = int(c_date.split("-")[1]);
+	pricls.append("countries", {
+		"country": u"Dominican Republic"
+	})
 
-	adj = 0 if now_month >= dt_month else -1
-	
-	age = (now_year - dt_year)  + adj
+	pricls.save()
 
-	return age 
-
-def calculate_age_m(c_date, a_date=None):
-	age = 0
-	today = a_date if a_date else nowdate();
-	now_year = int(today.split("-")[0]);
-	now_month = int(today.split("-")[1]);
-	now_day = int(today.split("-")[2]);
-
-	dt_year = int(c_date.split("-")[0]);
-	dt_month = int(c_date.split("-")[1]);
-	dt_day = int(c_date.split("-")[2]);
-
-	adj = 0 if now_day >= dt_day else -1
-	
-	age = (now_year - dt_year) * 12 + now_month - dt_month + adj
-
-	return age 
+def on_trash(self, event):
+	frappe.delete_doc_if_exists("Price List", self.name)
+	frappe.db.commit()
