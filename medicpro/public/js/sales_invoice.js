@@ -126,9 +126,10 @@ frappe.ui.form.on("Sales Invoice", {
 			() => { if (row && !row.item_code) return },
 			() => row.difference_amount = isNaN(row.difference_amount) ? 0.00 : row.difference_amount,
 			() => row.rate = isNaN(row.rate) ? 0.00 : row.rate,
-			() => row.authorized_amount = aplicar_porciento(row) ? row.rate * flt(row.insurance_coverage) / 100.00 : 0,
-			() => row.claimed_amount = aplicar_porciento(row) ? row.rate : 0,
-			() => row.difference_amount = row.rate - row.authorized_amount,
+			() => row.authorized_amount = aplicar_porciento(row) ? row.price_list_rate * flt(row.insurance_coverage) / 100.00 : 0,
+			() => row.claimed_amount = aplicar_porciento(row) ? row.price_list_rate : 0,
+			() => row.difference_amount = row.price_list_rate - row.authorized_amount,
+			() => row.difference_amount += row.margin_type == "Amount" ? row.margin_rate_or_amount: row.margin_rate_or_amount * row.price_list_rate / 100.0,
 			// () => row.difference_amount += row.adjustment - row.copago,
 			// () => row.rate += row.adjustment,
 			() => refresh_field("items"),
@@ -177,6 +178,18 @@ frappe.ui.form.on("Sales Invoice Item", {
 		frm.trigger("refresh_outside_amounts");
 	},
 	insurance_coverage: (frm, cdt, cdn) => {
+		frappe.run_serially([
+			() => frappe.timeout(0.3),
+			() => frm.events.item_table_update(frm, cdt, cdn),
+		]);
+	},
+	margin_type: (frm, cdt, cdn) => {
+		frappe.run_serially([
+			() => frappe.timeout(0.3),
+			() => frm.events.item_table_update(frm, cdt, cdn),
+		]);
+	},
+	margin_rate_or_amount: (frm, cdt, cdn) => {
 		frappe.run_serially([
 			() => frappe.timeout(0.3),
 			() => frm.events.item_table_update(frm, cdt, cdn),

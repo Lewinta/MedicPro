@@ -384,7 +384,7 @@
    "columns": 0,
    "creation": "2020-10-17 21:03:55.548587",
    "default": null,
-   "depends_on": null,
+   "depends_on": "eval: doc.invoice_type == \"Insurance Patient\"",
    "description": null,
    "docstatus": 0,
    "dt": "Sales Invoice",
