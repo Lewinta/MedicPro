@@ -126,6 +126,7 @@ frappe.ui.form.on("Sales Invoice", {
 			() => { if (row && !row.item_code) return },
 			() => row.difference_amount = isNaN(row.difference_amount) ? 0.00 : row.difference_amount,
 			() => row.rate = isNaN(row.rate) ? 0.00 : row.rate,
+			() => row.base_rate = isNaN(row.base_rate) ? 0.00 : row.base_rate,
 			() => row.authorized_amount = aplicar_porciento(row) ? row.price_list_rate * flt(row.insurance_coverage) / 100.00 : 0,
 			() => row.claimed_amount = aplicar_porciento(row) ? row.price_list_rate : 0,
 			() => row.difference_amount = row.price_list_rate - row.authorized_amount,
@@ -159,18 +160,42 @@ frappe.ui.form.on("Sales Invoice", {
 		])
 
 		refresh_field("items");
+	},
+	calculate_paid_amount: frm => {
+		let amount = 0.00;
+		let base_amount = 0.00;
+		setTimeout(function() {
+			$.map(frm.doc.payments, payment => {
+				amount += payment.amount;
+				base_amount += payment.base_amount;
+			});
+			frm.set_value("paid_amount", amount);
+			frm.set_value("base_paid_amount", base_amount);
+		}, 500);
 	}
 });
 
 frappe.ui.form.on("Sales Invoice Item", {
 	item_code: (frm, cdt, cdn) => {
 		let condition = frm.doc.invoice_type != "Alquiler" && frm.doc.invoice_type != "Proveedores" ? true : false
-
+		let item = locals[cdt][cdn];
+		let filters = {
+			"item_code": item.item_code,
+			"price_list": frm.doc.selling_price_list,
+		}
 		frappe.run_serially([
 			() => frappe.timeout(0.3),
+			() => frappe.db.get_value("Item Price", filters, ["margin_type", "margin_rate_or_amount"]).then(
+			(response) => {
+				if(!response)
+					return
+				let {margin_type, margin_rate_or_amount} = response.message;
+				frappe.model.set_value(cdt,cdn, "margin_type", margin_type);
+				frappe.model.set_value(cdt,cdn, "margin_rate_or_amount", margin_rate_or_amount);
+			}),
 			() => condition && frm.events.item_table_update(frm, cdt, cdn),
 			() => frappe.timeout(1.3),
-			() => frm.cscript.calculate_paid_amount(),
+			() => frm.trigger("calculate_paid_amount"),
 			() => frm.refresh_fields()
 		]);
 	},
@@ -187,18 +212,21 @@ frappe.ui.form.on("Sales Invoice Item", {
 		frappe.run_serially([
 			() => frappe.timeout(0.3),
 			() => frm.events.item_table_update(frm, cdt, cdn),
+			() => frm.events.calculate_paid_amount(frm, cdt, cdn),
 		]);
 	},
 	margin_rate_or_amount: (frm, cdt, cdn) => {
 		frappe.run_serially([
 			() => frappe.timeout(0.3),
 			() => frm.events.item_table_update(frm, cdt, cdn),
+			() => frm.events.calculate_paid_amount(frm, cdt, cdn),
 		]);
 	},
 	items_add: (frm, cdt, cdn) => {
 		let row = locals[cdt][cdn];
 		frappe.model.set_value(cdt, cdn, "insurance_coverage", frm.doc.insurance_coverage);
 		frappe.model.set_value(cdt, cdn, "rate", row.insurance_coverage * row.rate);
+		frappe.model.set_value(cdt, cdn, "base_rate", row.insurance_coverage * row.rate);
 	},
 });
 
